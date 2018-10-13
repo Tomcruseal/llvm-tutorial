@@ -120,7 +120,7 @@ class FPrototypeExprAST : public ExprAST{
         : FPrototype(FPrototype), Args(std::move(Args)) {}
 }*/
 
-class FPrototypeExprAST : public ExprAST{
+class FPrototypeExprAST {
     std::string Name;
     std::vector<std::string> Args;
 
@@ -131,7 +131,7 @@ class FPrototypeExprAST : public ExprAST{
     const std::string &getName() const {return Name;}
 };
 
-class FunctionDefineExprAST : public ExprAST{
+class FunctionDefineExprAST {
     std::unique_ptr<FPrototypeExprAST> FProto;
     std::unique_ptr<ExprAST> FBody;
 
@@ -265,7 +265,7 @@ static std::unique_ptr<ExprAST> ParseBinopRT(int ExprPrece, std::unique_ptr<Expr
         if(TokPrece < ExprPrece)
             return LT;
         //then it is a binary operator
-        int Binop = Curtok;    //'eat' the binary, aka '+'
+        int Binop = Curtok;    //'eat' the binary, i.e. '+'
         getNextTok();    //Curtok point to b
 
         auto RT = ParsePrimary();    //b point to RT, ParsePrimary includes another getNextTok()
@@ -283,8 +283,7 @@ static std::unique_ptr<ExprAST> ParseBinopRT(int ExprPrece, std::unique_ptr<Expr
 }
 
 //primary(Iden, number, para), binary, and prototype
-//extern declaration and funciton prototype
-//function prototypes
+//funciton prototype
 static std::unique_ptr<FPrototypeExprAST> ParseFPrototype(){
     if(Curtok!=tok_identifier)
         return LogError("Function name expected!");
@@ -311,4 +310,12 @@ static std::unique_ptr<FunctionDefineExprAST> ParseFunctionDefine(){
     if(!FProto)
         return nullptr;
     
+    if(auto E = parseExpression())
+        return llvm::make_unique<FunctionDefineExprAST>(std::move(FProto), std::move(E));
+    return nullptr;
+}
+
+static std::unique_ptr<FPrototypeExprAST> ParseExtern (){
+    getNextTok();    //eat extern
+    return ParseFPrototype();
 }
